@@ -6,6 +6,8 @@ using UnityEngine;
 public class Character : MonoBehaviour
 {
     public List<ItemData> Items = new List<ItemData>();
+    [HideInInspector]
+    public SceneItem ItemTryingToPickUp = null;
     [Button]
     public void UpdateItemsInModel()
     {
