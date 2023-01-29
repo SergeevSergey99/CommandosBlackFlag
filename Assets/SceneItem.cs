@@ -14,6 +14,10 @@ public class SceneItem : MonoBehaviour
     {
         this.button = button;
     }
+    public GameObject GetButton()
+    {
+        return button;
+    }
 
     private void OnCollisionEnter(Collision collision)
     {
@@ -32,6 +36,10 @@ public class SceneItem : MonoBehaviour
             characterTryingToPickUp.GetComponent<NavMeshAgent>().SetDestination(characterTryingToPickUp.transform.position);
         }
         characterTryingToPickUp = character;
+    }
+    public Character GetCharacterTryingToPickUp()
+    {
+        return characterTryingToPickUp;
     }
 
 }

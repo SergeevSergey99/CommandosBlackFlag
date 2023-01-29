@@ -23,7 +23,7 @@ public class ClickManager : MonoBehaviour
     private void Start()
     {
         itemsInScene.AddRange(FindObjectsOfType<SceneItem>());
-        SpamButtons();
+        //SpamButtons();
     }
 
     private void Update()
@@ -39,11 +39,10 @@ public class ClickManager : MonoBehaviour
                 {
                     //if (CurrChoseEffect != null) Destroy(CurrChoseEffect);
                     CurrCharacter.GetComponent<NavMeshAgent>().SetDestination(hit.point);
-                    if(CurrCharacter.GetComponent<Character>().ItemTryingToPickUp != null)
+                    if (CurrCharacter.GetComponent<Character>().ItemTryingToPickUp != null)
                     {
-                        
                         CurrCharacter.GetComponent<Character>().ItemTryingToPickUp.SetCharacterTryingToPickUp(null);
-                        ReSpamButtons();
+                        ReCalcButtonsPositions();
                         CurrCharacter.GetComponent<Character>().ItemTryingToPickUp = null;
                     }
 
@@ -66,7 +65,7 @@ public class ClickManager : MonoBehaviour
                 {
                     if (CurrChoseEffect != null) Destroy(CurrChoseEffect);
                     CurrCharacter = hit.collider.gameObject;
-                    ReSpamButtons();
+                    ReCalcButtonsPositions();
                     CurrChoseEffect = Instantiate(ChoseEffect);
                     CurrChoseEffect.GetComponent<FollowScript>().followTarget = hit.collider.gameObject;
                     CurrChoseEffect.transform.position = hit.collider.transform.position; // + hit.normal * 0.01f;
@@ -80,16 +79,18 @@ public class ClickManager : MonoBehaviour
         if (horiz != 0 || vert != 0)
         {
             Camera.main.transform.position += new Vector3(horiz, 0, vert) * CameraSpeed * Time.deltaTime;
-            isMoving = true;
-            ClearButtons();
+            //isMoving = true;
+            //ClearButtons();
+            ReCalcButtonsPositions();
         }
-        else
+
+        if (Input.mouseScrollDelta.y != 0)
         {
-            if (isMoving)
-            {
-                isMoving = false;
-                SpamButtons();
-            }
+            if (GetComponent<Camera>().fieldOfView - Input.mouseScrollDelta.y > 20 &&
+                GetComponent<Camera>().fieldOfView - Input.mouseScrollDelta.y < 100)
+                GetComponent<Camera>().fieldOfView -= Input.mouseScrollDelta.y;
+            //isMoving = true;
+            ReCalcButtonsPositions();
         }
     }
 
@@ -100,6 +101,7 @@ public class ClickManager : MonoBehaviour
         ClearButtons();
         SpamButtons();
     }
+
     public void ClearButtons()
     {
         foreach (Transform child in itemsButtonsParent)
@@ -118,25 +120,79 @@ public class ClickManager : MonoBehaviour
                 //go.GetComponent<RectTransform>().position = GetComponent<Camera>().WorldToViewportPoint(i.transform.position);
 
                 Vector2 viewportPosition = GetComponent<Camera>().WorldToViewportPoint(i.transform.position);
-                Vector2 finalPosition = new Vector2(1920 * viewportPosition.x - 1920 / 2, 1080 * viewportPosition.y - 1080 / 2);
-                if(viewportPosition.x > 0 && viewportPosition.x < 1 && viewportPosition.y > 0 && viewportPosition.y < 1)
+                Vector2 finalPosition = new Vector2(1920 * viewportPosition.x - 1920 / 2,
+                    1080 * viewportPosition.y - 1080 / 2);
+                if (viewportPosition.x > 0 && viewportPosition.x < 1 && viewportPosition.y > 0 &&
+                    viewportPosition.y < 1)
                 {
                     var go = Instantiate(ItemButtonPrefab, itemsButtonsParent);
                     go.GetComponent<RectTransform>().localPosition = finalPosition;
 
-                    go.transform.GetChild(0).GetComponent<Image>().sprite = i.ItemData.Icon;
-                    go.GetComponent<Button>().onClick.AddListener(() =>
-                    {
-                        i.SetCharacterTryingToPickUp(CurrCharacter.GetComponent<Character>());
-                        CurrCharacter.GetComponent<NavMeshAgent>().SetDestination(i.transform.position);
-                        CurrCharacter.GetComponent<Character>().ItemTryingToPickUp = i;
-                        var Instance = Instantiate(GetItemEffect);
-                        Instance.transform.position = i.transform.position;
-                        Destroy(Instance, 1.5f);
-                        Destroy(go);
-                    });
-                    
+                    go.GetComponentInChildren<Button>().transform.GetChild(0).GetComponent<Image>().sprite =
+                        i.ItemData.Icon;
+                    go.GetComponentInChildren<Button>().onClick.AddListener(() => { SpamButton(i, go); });
+
                     i.SetButton(go);
+                }
+            }
+        }
+    }
+
+    private void SpamButton(SceneItem i, GameObject go)
+    {
+        i.SetCharacterTryingToPickUp(CurrCharacter.GetComponent<Character>());
+        CurrCharacter.GetComponent<NavMeshAgent>().SetDestination(i.transform.position);
+        CurrCharacter.GetComponent<Character>().ItemTryingToPickUp = i;
+        var Instance = Instantiate(GetItemEffect);
+        Instance.transform.position = i.transform.position;
+        Destroy(Instance, 1.5f);
+        Destroy(go);
+    }
+
+    public void ReCalcButtonsPositions()
+    {
+        if (CurrCharacter == null) return;
+        foreach (var i in itemsInScene)
+        {
+            if (i != null)
+            {
+                if (i.GetCharacterTryingToPickUp() != null &&
+                    i.GetCharacterTryingToPickUp().gameObject == CurrCharacter)
+                {
+                    if (i.GetButton() != null)
+                        Destroy(i.GetButton());
+                    continue;
+                }
+
+                Vector2 viewportPosition = GetComponent<Camera>().WorldToViewportPoint(i.transform.position);
+                Vector2 finalPosition = new Vector2(1920 * viewportPosition.x - 1920 / 2,
+                    1080 * viewportPosition.y - 1080 / 2);
+
+                if (i.GetButton() != null)
+                {
+                    if (viewportPosition.x > 0 && viewportPosition.x < 1 && viewportPosition.y > 0 &&
+                        viewportPosition.y < 1)
+                    {
+                        i.GetButton().GetComponent<RectTransform>().localPosition = finalPosition;
+                    }
+                    else
+                    {
+                        Destroy(i.GetButton());
+                    }
+                }
+                else
+                {
+                    if (viewportPosition.x > 0 && viewportPosition.x < 1 && viewportPosition.y > 0 &&
+                        viewportPosition.y < 1)
+                    {
+                        var go = Instantiate(ItemButtonPrefab, itemsButtonsParent);
+                        go.GetComponent<RectTransform>().localPosition = finalPosition;
+
+                        go.GetComponentInChildren<Button>().transform.GetChild(0).GetComponent<Image>().sprite =
+                            i.ItemData.Icon;
+                        go.GetComponentInChildren<Button>().onClick.AddListener(() => { SpamButton(i, go); });
+                        i.SetButton(go);
+                    }
                 }
             }
         }
