@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 public class ClickManager : MonoBehaviour
 {
-    public GameObject CurrCharacter;
+    public PlayableCharacterController CurrCharacter;
 
     public GameObject MoveToEffect;
     public GameObject ChoseEffect;
@@ -39,11 +39,11 @@ public class ClickManager : MonoBehaviour
                 {
                     //if (CurrChoseEffect != null) Destroy(CurrChoseEffect);
                     CurrCharacter.GetComponent<NavMeshAgent>().SetDestination(hit.point);
-                    if (CurrCharacter.GetComponent<Character>().ItemTryingToPickUp != null)
+                    if (CurrCharacter.ItemTryingToPickUp != null)
                     {
-                        CurrCharacter.GetComponent<Character>().ItemTryingToPickUp.SetCharacterTryingToPickUp(null);
+                        CurrCharacter.ItemTryingToPickUp.SetCharacterTryingToPickUp(null);
                         ReCalcButtonsPositions();
-                        CurrCharacter.GetComponent<Character>().ItemTryingToPickUp = null;
+                        CurrCharacter.ItemTryingToPickUp = null;
                     }
 
                     var Instance = Instantiate(MoveToEffect);
@@ -61,10 +61,10 @@ public class ClickManager : MonoBehaviour
                         Destroy(Instance, 1.5f);
                     }
                 }*/
-                else if (hit.collider.GetComponent<CharacterView>())
+                else if (hit.collider.GetComponent<PlayableCharacterController>())
                 {
                     if (CurrChoseEffect != null) Destroy(CurrChoseEffect);
-                    CurrCharacter = hit.collider.gameObject;
+                    CurrCharacter = hit.collider.GetComponent<PlayableCharacterController>();
                     ReCalcButtonsPositions();
                     CurrChoseEffect = Instantiate(ChoseEffect);
                     CurrChoseEffect.GetComponent<FollowScript>().followTarget = hit.collider.gameObject;
@@ -142,7 +142,7 @@ public class ClickManager : MonoBehaviour
     {
         i.SetCharacterTryingToPickUp(CurrCharacter.GetComponent<Character>());
         CurrCharacter.GetComponent<NavMeshAgent>().SetDestination(i.transform.position);
-        CurrCharacter.GetComponent<Character>().ItemTryingToPickUp = i;
+        CurrCharacter.ItemTryingToPickUp = i;
         var Instance = Instantiate(GetItemEffect);
         Instance.transform.position = i.transform.position;
         Destroy(Instance, 1.5f);
@@ -157,7 +157,7 @@ public class ClickManager : MonoBehaviour
             if (i != null)
             {
                 if (i.GetCharacterTryingToPickUp() != null &&
-                    i.GetCharacterTryingToPickUp().gameObject == CurrCharacter)
+                    i.GetCharacterTryingToPickUp().gameObject == CurrCharacter.gameObject)
                 {
                     if (i.GetButton() != null)
                         Destroy(i.GetButton());
